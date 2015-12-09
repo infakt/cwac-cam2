@@ -19,24 +19,21 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
-import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.util.DisplayMetrics;
-import android.util.SparseIntArray;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.WindowManager;
+
 import com.commonsware.cwac.cam2.CameraConfigurator;
 import com.commonsware.cwac.cam2.CameraEngine;
 import com.commonsware.cwac.cam2.CameraPlugin;
 import com.commonsware.cwac.cam2.CameraSession;
-import com.commonsware.cwac.cam2.CameraTwoConfigurator;
 import com.commonsware.cwac.cam2.ClassicCameraConfigurator;
 import com.commonsware.cwac.cam2.SimpleCameraTwoConfigurator;
 import com.commonsware.cwac.cam2.SimpleClassicCameraConfigurator;
 import com.commonsware.cwac.cam2.VideoTransaction;
-import com.commonsware.cwac.cam2.util.Size;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -241,7 +238,7 @@ public class OrientationPlugin implements CameraPlugin {
         displayOrientation=(info.orientation - degrees + 360) % 360;
       }
 
-      return(displayOrientation);
+      return(0);
     }
   }
 
@@ -259,7 +256,7 @@ public class OrientationPlugin implements CameraPlugin {
 
       int pictureOrientation=0;
 
-      if (lastOrientation!=android.view.OrientationEventListener.ORIENTATION_UNKNOWN) {
+      //if (lastOrientation!=android.view.OrientationEventListener.ORIENTATION_UNKNOWN) {
         int sensorOrientation=cc.get(CameraCharacteristics.SENSOR_ORIENTATION);
         int deviceOrientation=(lastOrientation + 45) / 90 * 90;
 
@@ -268,9 +265,9 @@ public class OrientationPlugin implements CameraPlugin {
         }
 
         pictureOrientation=(sensorOrientation + deviceOrientation + 360) % 360;
-      }
+      //}
 
-      captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, pictureOrientation);
+      captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
     }
   }
 }
