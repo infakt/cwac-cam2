@@ -147,6 +147,24 @@ public class Utils {
     return(result);
   }
 
+  public static Size getOptimalPictureSize(CameraDescriptor descriptor, int width, int height) {
+    Size result=null;
+    List<Size> sorted = new ArrayList<>(descriptor.getPictureSizes());
+    Collections.sort(sorted, Collections.reverseOrder(new CompareSizesByArea()));
+    float ratio = (float)width/(float)height;
+
+    for (Size size : sorted) {
+      if (result == null) {
+        result = size;
+      }
+      float ratioDifference = Math.abs((float) size.getWidth() / (float) size.getHeight() - ratio);
+      if (ratioDifference < 0.2) {
+        return size;
+      }
+    }
+    return (result);
+  }
+
   // based on https://github.com/googlesamples/android-Camera2Basic/blob/master/Application/src/main/java/com/example/android/camera2basic/Camera2BasicFragment.java
 
   /**

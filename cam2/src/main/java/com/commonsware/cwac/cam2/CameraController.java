@@ -305,16 +305,16 @@ public class CameraController implements CameraView.StateCallback {
       CameraView cv=getPreview(camera);
       Size pictureSize;
 
+      if (camera != null && cv.getWidth() > 0 && cv.getHeight() > 0) {
+        previewSize=Utils.chooseOptimalSize(camera.getPreviewSizes(),
+            cv.getWidth(), cv.getHeight(), new Size(cv.getWidth(), cv.getHeight()));
+      }
+
       if (quality>0) {
-        pictureSize=Utils.getLargestPictureSize(camera);
+        pictureSize=Utils.getOptimalPictureSize(camera, previewSize.getWidth(), previewSize.getHeight());
       }
       else {
         pictureSize=Utils.getSmallestPictureSize(camera);
-      }
-
-      if (camera != null && cv.getWidth() > 0 && cv.getHeight() > 0) {
-        previewSize=Utils.chooseOptimalSize(camera.getPreviewSizes(),
-            cv.getWidth(), cv.getHeight(), pictureSize);
       }
 
       SurfaceTexture texture=cv.getSurfaceTexture();
