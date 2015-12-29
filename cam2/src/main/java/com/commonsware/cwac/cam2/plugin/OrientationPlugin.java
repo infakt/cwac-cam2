@@ -62,7 +62,7 @@ public class OrientationPlugin implements CameraPlugin {
     };
 
     if (orientationEventListener.canDetectOrientation()) {
-      orientationEventListener.enable();
+     // orientationEventListener.enable();
     }
     else {
       orientationEventListener.disable();
@@ -111,12 +111,13 @@ public class OrientationPlugin implements CameraPlugin {
       Camera camera, Camera.Parameters params) {
       int displayOrientation=getDisplayOrientation(info, true);
 
-      if ("samsung".equals(Build.MANUFACTURER) &&
-        "sf2wifixx".equals(Build.PRODUCT)) {
-        camera.setDisplayOrientation(0);
-      }
-      else if ("Huawei".equals(Build.MANUFACTURER) &&
-        "angler".equals(Build.PRODUCT)) {
+     // if ("samsung".equals(Build.MANUFACTURER) &&
+    //    "sf2wifixx".equals(Build.PRODUCT)) {
+     //   camera.setDisplayOrientation(0);
+     // }
+     // else
+      //if ("Huawei".equals(Build.MANUFACTURER) &&
+     //   "angler".equals(Build.PRODUCT)) {
         int degrees = 0;
         int temp=displayOrientation;
 
@@ -134,13 +135,13 @@ public class OrientationPlugin implements CameraPlugin {
           temp = (info.orientation - degrees + 360) % 360;
         }
         camera.setDisplayOrientation(temp);
-      }
-      else if (displayOrientation==180) {
-        camera.setDisplayOrientation(270);
-      }
-      else {
-        camera.setDisplayOrientation(90);
-      }
+     // }
+//      else if (displayOrientation==180) {
+//        camera.setDisplayOrientation(270);
+//      }
+//      else {
+//        camera.setDisplayOrientation(90);
+//      }
 
       if (params!=null) {
         int outputOrientation;
