@@ -29,12 +29,14 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.FrameLayout;
+
 import com.commonsware.cwac.cam2.util.Utils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -302,11 +304,11 @@ abstract public class AbstractCameraActivity extends Activity {
         (List<FlashMode>)getIntent().getExtras().getSerializable(EXTRA_FLASH_MODES);
 
       if (flashModes==null) {
-        flashModes=new ArrayList<FlashMode>();
+        flashModes=new ArrayList<FlashMode>(); // TODO REMOVE FROM HERE
       }
 
       CameraController ctrl=
-        new CameraController(focusMode, flashModes,isVideo());
+        new CameraController(focusMode,isVideo());
 
       cameraFrag.setController(ctrl);
       cameraFrag

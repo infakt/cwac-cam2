@@ -45,15 +45,14 @@ public class CameraController implements CameraView.StateCallback {
   private boolean switchPending=false;
   private boolean isVideoRecording=false;
   private final AbstractCameraActivity.FocusMode focusMode;
-  private final List<FlashMode> flashModes;
+
+  private List<FlashMode> flashModes;
   private final boolean isVideo;
 
   public CameraController(AbstractCameraActivity.FocusMode focusMode,
-                          List<FlashMode> flashModes,
                           boolean isVideo) {
     this.focusMode=focusMode==null ?
       AbstractCameraActivity.FocusMode.CONTINUOUS : focusMode;
-    this.flashModes=flashModes;
     this.isVideo=isVideo;
   }
 
@@ -185,6 +184,16 @@ public class CameraController implements CameraView.StateCallback {
     stop();
   }
 
+  public List<FlashMode> getFlashModes() {
+    return flashModes;
+  }
+
+  public void setFlashMode(FlashMode mode) {
+    if (flashModes.contains(mode)) {
+      EventBus.getDefault().post(new FlashModeRequestEvent(mode));
+    }
+  }
+
   /**
    * Takes a picture, in accordance with the details supplied
    * in the PictureTransaction. Subscribe to the
@@ -243,12 +252,13 @@ public class CameraController implements CameraView.StateCallback {
       CameraDescriptor camera=cameras.get(currentCamera);
       CameraView cv=getPreview(camera);
 
+
       if (camera != null && cv.getWidth() > 0 && cv.getHeight() > 0) {
         previewSize=Utils.chooseOptimalSize(camera.getPreviewSizes(),
             cv.getWidth(), cv.getHeight(), new Size(cv.getWidth(), cv.getHeight()));
       }
 
-
+      flashModes = camera.getFlashModes();
 
       SurfaceTexture texture=cv.getSurfaceTexture();
 
@@ -325,6 +335,13 @@ public class CameraController implements CameraView.StateCallback {
     }
   }
 
+  @SuppressWarnings("unused")
+  public void onEventMainThread(CameraEngine.FlashModeChangedEvent event) {
+    if (engine!=null) {
+      engine.handleFlashModeChange(session, event);
+    }
+  }
+
   /**
    * Raised if there are no available cameras on this
    * device. Consider using uses-feature elements in the
@@ -374,6 +391,18 @@ public class CameraController implements CameraView.StateCallback {
 
     public CameraController getDestroyedController() {
       return(ctlr);
+    }
+  }
+
+  public static class FlashModeRequestEvent {
+    private FlashMode mode;
+
+    public FlashModeRequestEvent(FlashMode mode) {
+      this.mode = mode;
+    }
+
+    public FlashMode getMode() {
+      return mode;
     }
   }
 }

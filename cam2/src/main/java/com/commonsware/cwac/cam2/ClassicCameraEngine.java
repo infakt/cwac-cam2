@@ -15,7 +15,6 @@
 package com.commonsware.cwac.cam2;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -23,12 +22,10 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
-import android.view.Surface;
-import android.view.WindowManager;
+
 import com.commonsware.cwac.cam2.util.Size;
-import java.io.File;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,6 +84,8 @@ public class ClassicCameraEngine extends CameraEngine
               sizes.add(new Size(size.width, size.height));
             }
 
+            descriptor.flashModes = FlashMode.fromClassic(params.getSupportedFlashModes());
+
             descriptor.setPreviewSizes(sizes);
 
             sizes=new ArrayList<Size>();
@@ -137,7 +136,6 @@ public class ClassicCameraEngine extends CameraEngine
       }
     });
   }
-
   /**
    * {@inheritDoc}
    */
@@ -316,6 +314,12 @@ public class ClassicCameraEngine extends CameraEngine
   }
 
   @Override
+  public void handleFlashModeChange(CameraSession session,
+                                    FlashModeChangedEvent event) {
+    ((Descriptor)session.getDescriptor()).camera.setParameters(((Session)session).configureStillCamera(false));
+  }
+
+  @Override
   public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
     if (what==MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED ||
         what==MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED ||
@@ -390,6 +394,7 @@ public class ClassicCameraEngine extends CameraEngine
     private Camera camera;
     private ArrayList<Size> pictureSizes;
     private ArrayList<Size> previewSizes;
+    private List<FlashMode> flashModes;
     private final int facing;
 
     private Descriptor(int cameraId, Camera.CameraInfo info) {
@@ -446,6 +451,12 @@ public class ClassicCameraEngine extends CameraEngine
 
       return(score);
     }
+
+    @Override
+    public List<FlashMode> getFlashModes() {
+      return flashModes;
+    }
+
   }
 
   private static class Session extends CameraSession {

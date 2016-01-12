@@ -15,31 +15,35 @@
 package com.commonsware.cwac.cam2.plugin;
 
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.os.Build;
 import android.util.Log;
-import android.view.OrientationEventListener;
-import com.commonsware.cwac.cam2.AbstractCameraActivity;
+
 import com.commonsware.cwac.cam2.CameraConfigurator;
+import com.commonsware.cwac.cam2.CameraController;
+import com.commonsware.cwac.cam2.CameraEngine;
 import com.commonsware.cwac.cam2.CameraPlugin;
 import com.commonsware.cwac.cam2.CameraSession;
 import com.commonsware.cwac.cam2.ClassicCameraConfigurator;
 import com.commonsware.cwac.cam2.FlashMode;
 import com.commonsware.cwac.cam2.SimpleCameraTwoConfigurator;
 import com.commonsware.cwac.cam2.SimpleClassicCameraConfigurator;
+
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * Plugin for managing flash modes
  */
 public class FlashModePlugin implements CameraPlugin {
   private final List<FlashMode> flashModes;
+  private FlashMode selectedFlashMode;
 
   public FlashModePlugin(List<FlashMode> flashModes) {
+    EventBus.getDefault().register(this);
     this.flashModes=flashModes;
   }
 
@@ -68,7 +72,13 @@ public class FlashModePlugin implements CameraPlugin {
    */
   @Override
   public void destroy() {
-    // no-op
+    EventBus.getDefault().unregister(this);
+  }
+
+  @SuppressWarnings("unused")
+  public void onEvent(CameraController.FlashModeRequestEvent event) {
+    selectedFlashMode = event.getMode();
+    EventBus.getDefault().post(new CameraEngine.FlashModeChangedEvent());
   }
 
   class Classic extends SimpleClassicCameraConfigurator {
@@ -80,41 +90,16 @@ public class FlashModePlugin implements CameraPlugin {
       Camera.CameraInfo info,
       Camera camera, Camera.Parameters params) {
       if (params!=null) {
-        String desiredMode=null;
-        boolean matched=false;
-
-        for (FlashMode mode : flashModes) {
-          if (mode==FlashMode.OFF) {
-            desiredMode=Camera.Parameters.FLASH_MODE_OFF;
-          }
-          else if (mode==FlashMode.ALWAYS) {
-            desiredMode=Camera.Parameters.FLASH_MODE_ON;
-          }
-          else if (mode==FlashMode.AUTO) {
-            desiredMode=Camera.Parameters.FLASH_MODE_AUTO;
-          }
-          else if (mode==FlashMode.REDEYE) {
-            desiredMode=Camera.Parameters.FLASH_MODE_RED_EYE;
-          }
-
-          List<String> supportedModes=params.getSupportedFlashModes();
-
-          if (supportedModes!=null &&
-            supportedModes.contains(desiredMode)) {
-            params.setFlashMode(desiredMode);
-            matched=true;
-            break;
-          }
-        }
-
-        if (!matched) {
-          Log.w("CWAC-Cam2", "no support for requested flash mode");
+        if (flashModes.contains(selectedFlashMode)) {
+          params.setFlashMode(selectedFlashMode.toClassic());
+        } else {
+            Log.w("CWAC-Cam2", "no support for requested flash mode");
         }
       }
-
       return(params);
     }
   }
+
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   class Two extends SimpleCameraTwoConfigurator {
@@ -152,29 +137,29 @@ public class FlashModePlugin implements CameraPlugin {
 
     private int getConvertedFlashMode(CameraCharacteristics cc) {
       int[] availModes=cc.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
-
-      for (FlashMode mode : flashModes) {
-        int desiredMode=-1;
-
-        if (mode==FlashMode.OFF) {
-          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON;
-        }
-        else if (mode==FlashMode.ALWAYS) {
-          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_ALWAYS_FLASH;
-        }
-        else if (mode==FlashMode.AUTO) {
-          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH;
-        }
-        else if (mode==FlashMode.REDEYE) {
-          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE;
-        }
-
-        for (int availMode : availModes) {
-          if (desiredMode==availMode) {
-            return(desiredMode);
-          }
-        }
-      }
+// TODO CAMERA2
+//      for (FlashMode mode : flashModes) {
+//        int desiredMode=-1;
+//
+//        if (mode==FlashMode.OFF) {
+//          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON;
+//        }
+//        else if (mode==FlashMode.ON) {
+//          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_ALWAYS_FLASH;
+//        }
+//        else if (mode==FlashMode.AUTO) {
+//          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH;
+//        }
+//        else if (mode==FlashMode.REDEYE) {
+//          desiredMode=CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE;
+//        }
+//
+//        for (int availMode : availModes) {
+//          if (desiredMode==availMode) {
+//            return(desiredMode);
+//          }
+//        }
+//      }
 
       return(-1);
     }

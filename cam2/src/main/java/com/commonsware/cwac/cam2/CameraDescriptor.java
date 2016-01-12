@@ -14,9 +14,10 @@
 
 package com.commonsware.cwac.cam2;
 
-import android.graphics.ImageFormat;
 import com.commonsware.cwac.cam2.util.Size;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A representation of a camera. Specific camera engines will
@@ -37,6 +38,8 @@ public interface CameraDescriptor {
    * particular order
    */
   ArrayList<Size> getPictureSizes();
+
+  List<FlashMode> getFlashModes();
 
   /**
    * Indicates if the camera (and this library) supports a

@@ -14,9 +14,46 @@
 
 package com.commonsware.cwac.cam2;
 
+import android.hardware.Camera;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public enum FlashMode {
   OFF,
-  ALWAYS,
+  ON,
   AUTO,
-  REDEYE
+  REDEYE,
+  TORCH;
+
+  public static List<FlashMode> fromClassic(List<String> classicModes) {
+    List<FlashMode> matchedModes = new ArrayList<FlashMode>();
+    if (classicModes != null) {
+      for (FlashMode mode : FlashMode.values()) {
+        for (String name : classicModes) {
+          if (name.equals(mode.toClassic())) {
+            matchedModes.add(mode);
+            break;
+          }
+        }
+      }
+    }
+    return matchedModes;
+  }
+
+  public String toClassic() {
+    switch (this) {
+      case OFF:
+        return Camera.Parameters.FLASH_MODE_OFF;
+      case ON:
+        return Camera.Parameters.FLASH_MODE_ON;
+      case AUTO:
+        return Camera.Parameters.FLASH_MODE_AUTO;
+      case REDEYE:
+        return Camera.Parameters.FLASH_MODE_RED_EYE;
+      case TORCH:
+        return Camera.Parameters.FLASH_MODE_TORCH;
+    }
+    return null;
+  }
 }

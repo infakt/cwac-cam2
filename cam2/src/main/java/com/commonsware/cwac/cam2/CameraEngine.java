@@ -126,6 +126,10 @@ abstract public class CameraEngine {
 
   }
 
+  public static class FlashModeChangedEvent {
+
+  }
+
   /**
    * Event raised when picture is taken, as a result of a
    * takePicture() call. May include an exception if there was
@@ -279,6 +283,8 @@ abstract public class CameraEngine {
 
   abstract public void handleOrientationChange(CameraSession session,
                                                OrientationChangedEvent event);
+  abstract public void handleFlashModeChange(CameraSession session,
+                                             FlashModeChangedEvent event);
 
   /**
    * Builds a CameraEngine instance based on the device's
