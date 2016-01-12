@@ -68,71 +68,82 @@ public class ClassicCameraEngine extends CameraEngine
       @Override
       public void run() {
         if (descriptors == null) {
-          int count=Camera.getNumberOfCameras();
-          List<Descriptor> result=new ArrayList<Descriptor>();
-          Camera.CameraInfo info=new Camera.CameraInfo();
+          try {
+            int count = Camera.getNumberOfCameras();
+            List<Descriptor> result = new ArrayList<Descriptor>();
+            Camera.CameraInfo info = new Camera.CameraInfo();
 
-          for (int cameraId=0; cameraId < count; cameraId++) {
-            Camera.getCameraInfo(cameraId, info);
-            Descriptor descriptor=new Descriptor(cameraId, info);
+            for (int cameraId = 0; cameraId < count; cameraId++) {
+              Camera.getCameraInfo(cameraId, info);
+              Descriptor descriptor = new Descriptor(cameraId, info);
 
-            Camera camera=Camera.open(descriptor.getCameraId());
-            Camera.Parameters params=camera.getParameters();
-            ArrayList<Size> sizes=new ArrayList<Size>();
+              Camera camera = Camera.open(descriptor.getCameraId());
+              Camera.Parameters params = camera.getParameters();
+              ArrayList<Size> sizes = new ArrayList<Size>();
 
-            for (Camera.Size size : params.getSupportedPreviewSizes()) {
-              sizes.add(new Size(size.width, size.height));
-            }
-
-            descriptor.flashModes = FlashMode.fromClassic(params.getSupportedFlashModes());
-
-            descriptor.setPreviewSizes(sizes);
-
-            sizes=new ArrayList<Size>();
-
-            for (Camera.Size size : params.getSupportedPictureSizes()) {
-              if (!"samsung".equals(Build.MANUFACTURER) ||
-                  !"jflteuc".equals(Build.PRODUCT) ||
-                  size.width<2048) {
+              for (Camera.Size size : params.getSupportedPreviewSizes()) {
                 sizes.add(new Size(size.width, size.height));
               }
+
+              descriptor.flashModes = FlashMode.fromClassic(params.getSupportedFlashModes());
+
+              descriptor.setPreviewSizes(sizes);
+
+              sizes = new ArrayList<Size>();
+
+              for (Camera.Size size : params.getSupportedPictureSizes()) {
+                if (!"samsung".equals(Build.MANUFACTURER) ||
+                        !"jflteuc".equals(Build.PRODUCT) ||
+                        size.width < 2048) {
+                  sizes.add(new Size(size.width, size.height));
+                }
+              }
+
+              descriptor.setPictureSizes(sizes);
+              camera.release();
+              result.add(descriptor);
             }
 
-            descriptor.setPictureSizes(sizes);
-            camera.release();
-            result.add(descriptor);
-          }
+            descriptors = result;
+          } catch (Exception e) {
+            getBus().post(new OpenedEvent(e));
 
-          descriptors=result;
-        }
-
-        List<CameraDescriptor> result=new ArrayList<CameraDescriptor>();
-
-        for (Descriptor descriptor : descriptors) {
-          if (!criteria.getFacingExactMatch() ||
-            descriptor.getScore(criteria)>0) {
-            result.add(descriptor);
+            if (isDebug()) {
+              Log.e(getClass().getSimpleName(), "Exception loadint descriptors ", e);
+            }
           }
         }
 
-        Collections.sort(result, new Comparator<CameraDescriptor>() {
-          @Override
-          public int compare(CameraDescriptor descriptor, CameraDescriptor t1) {
-            Descriptor lhs=(Descriptor)descriptor;
-            Descriptor rhs=(Descriptor)t1;
 
-            // descending, so invert normal side-ness
+        if (descriptors != null) {
+          List<CameraDescriptor> result = new ArrayList<CameraDescriptor>();
 
-            int lhScore=rhs.getScore(criteria);
-            int rhScore=lhs.getScore(criteria);
-
-            // from Integer.compare(), which is new to API Level 19
-
-            return(lhScore < rhScore ? -1 : (lhScore == rhScore ? 0 : 1));
+          for (Descriptor descriptor : descriptors) {
+            if (!criteria.getFacingExactMatch() ||
+                    descriptor.getScore(criteria) > 0) {
+              result.add(descriptor);
+            }
           }
-        });
 
-        getBus().post(new CameraEngine.CameraDescriptorsEvent(result));
+          Collections.sort(result, new Comparator<CameraDescriptor>() {
+            @Override
+            public int compare(CameraDescriptor descriptor, CameraDescriptor t1) {
+              Descriptor lhs = (Descriptor) descriptor;
+              Descriptor rhs = (Descriptor) t1;
+
+              // descending, so invert normal side-ness
+
+              int lhScore = rhs.getScore(criteria);
+              int rhScore = lhs.getScore(criteria);
+
+              // from Integer.compare(), which is new to API Level 19
+
+              return (lhScore < rhScore ? -1 : (lhScore == rhScore ? 0 : 1));
+            }
+          });
+
+          getBus().post(new CameraEngine.CameraDescriptorsEvent(result));
+        }
       }
     });
   }
@@ -207,12 +218,11 @@ public class ClassicCameraEngine extends CameraEngine
         Descriptor descriptor=(Descriptor)session.getDescriptor();
         Camera camera=descriptor.getCamera();
 
-        if (camera == null) {
-          camera=Camera.open(descriptor.getCameraId());
-          descriptor.setCamera(camera);
-        }
-
         try {
+          if (camera == null) {
+            camera=Camera.open(descriptor.getCameraId());
+            descriptor.setCamera(camera);
+          }
           camera.setParameters(((Session)session).configureStillCamera(
             false));
           camera.setPreviewTexture(texture);
@@ -220,7 +230,9 @@ public class ClassicCameraEngine extends CameraEngine
           getBus().post(new OpenedEvent());
         }
         catch (Exception e) {
-          camera.release();
+          if (camera != null) {
+            camera.release();
+          }
           descriptor.setCamera(null);
           getBus().post(new OpenedEvent(e));
 
