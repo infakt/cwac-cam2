@@ -424,7 +424,21 @@ public class ClassicCameraEngine extends CameraEngine
    */
   @Override
   public boolean supportsDynamicFlashModes() {
-    return(false);
+    return(true);
+  }
+
+  @Override
+  public List<FlashMode> supportedFlashModes() {
+    return eligibleFlashModes;
+  }
+
+  @Override
+  public void setFlashMode(CameraSession session, FlashMode newMode) {
+      Descriptor descriptor=(Descriptor)session.getDescriptor();
+      Camera camera=descriptor.getCamera();
+      Camera.Parameters params=camera.getParameters();
+      params.setFlashMode(newMode.getClassicMode());
+      camera.setParameters(params);
   }
 
   @Override

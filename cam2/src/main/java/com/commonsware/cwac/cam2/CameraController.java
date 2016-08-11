@@ -277,6 +277,14 @@ public class CameraController implements CameraView.StateCallback {
     return(engine.zoomTo(session, zoomLevel));
   }
 
+  public void setFlashMode(FlashMode newMode) {
+    engine.setFlashMode(session, newMode);
+  }
+
+  public List<FlashMode> supportedFlashModes() {
+    return engine.eligibleFlashModes;
+  }
+
   private CameraView getPreview(CameraDescriptor camera) {
     CameraView result=previews.get(camera);
 

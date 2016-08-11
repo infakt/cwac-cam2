@@ -313,6 +313,18 @@ abstract public class CameraEngine {
   abstract public boolean supportsDynamicFlashModes();
 
   /**
+   * @return list of supported flash modes by engine
+   */
+  abstract public List<FlashMode> supportedFlashModes();
+
+  /**
+   * Sets the desired flash mode, if supported.
+   *
+   * @param newMode mode to set
+   */
+  abstract public void setFlashMode(CameraSession session, FlashMode newMode);
+
+  /**
    * @return true if this camera supports zoom, false otherwise
    */
   abstract public boolean supportsZoom(CameraSession session);

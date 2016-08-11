@@ -332,6 +332,36 @@ public class CameraTwoEngine extends CameraEngine {
   }
 
   @Override
+  public List<FlashMode> supportedFlashModes() {
+    return eligibleFlashModes;
+  }
+
+  @Override
+  public void setFlashMode(CameraSession session, FlashMode newMode) {
+    final Session s = (Session) session;
+    try {
+      s.setCurrentFlashMode(newMode);
+      Descriptor camera=(Descriptor)s.getDescriptor();
+      CameraCharacteristics cc=mgr.getCameraCharacteristics(camera.cameraId);
+
+      if (s.getZoomRect()!=null) {
+        s
+                .previewRequestBuilder
+                .set(CaptureRequest.SCALER_CROP_REGION,
+                        s.getZoomRect());
+      }
+
+      s.addToPreviewRequest(cc, s.previewRequestBuilder);
+
+      s.previewRequest=s.previewRequestBuilder.build();
+
+      ((Session) session).captureSession.setRepeatingRequest(s.previewRequest, null, handler);
+    } catch (CameraAccessException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Override
   public boolean supportsZoom(CameraSession session) {
     boolean result=false;
     Descriptor descriptor=(Descriptor)session.getDescriptor();
