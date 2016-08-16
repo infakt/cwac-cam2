@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -46,6 +47,7 @@ public class ClassicCameraEngine extends CameraEngine
   private VideoTransaction xact;
   private int previewWidth, previewHeight;
   private int previewFormat;
+  private boolean focusInProgress;
 
   public ClassicCameraEngine(Context ctxt) {
     this.ctxt=ctxt.getApplicationContext();
@@ -265,6 +267,12 @@ public class ClassicCameraEngine extends CameraEngine
             false));
           camera.setPreviewTexture(texture);
           camera.startPreview();
+          camera.setAutoFocusMoveCallback(new Camera.AutoFocusMoveCallback() {
+            @Override
+            public void onAutoFocusMoving(boolean start, Camera camera) {
+              focusInProgress = start;
+            }
+          });
           getBus().post(new OpenedEvent());
         }
         catch (Exception e) {
@@ -469,6 +477,23 @@ public class ClassicCameraEngine extends CameraEngine
     }
 
     return(result);
+  }
+
+  @Override
+  public void getFocusState(CameraSession session, final FocusStateCallback callback) {
+    if (focusInProgress) {
+      callback.focusStateRetrieved(FocusState.FOCUSING);
+    } else {
+      Descriptor descriptor=(Descriptor) session.getDescriptor();
+      final Camera camera=descriptor.getCamera();
+      camera.autoFocus(new Camera.AutoFocusCallback() {
+            @Override
+            public void onAutoFocus(boolean success, Camera camera) {
+              callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
+              camera.cancelAutoFocus(); // unlock
+            }
+          });
+        }
   }
 
   @Override

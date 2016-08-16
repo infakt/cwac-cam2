@@ -66,6 +66,16 @@ public class CameraTwoEngine extends CameraEngine {
 //  private CountDownLatch closeLatch=null;
   private MediaActionSound shutter=new MediaActionSound();
   private List<Descriptor> descriptors=null;
+  private FocusState currentFocusState;
+  private CameraCaptureSession.CaptureCallback focusInfoCallback = new CameraCaptureSession.CaptureCallback() {
+
+    @Override
+    public void onCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult) {
+      Integer cam2Mode = partialResult.get(CaptureResult.CONTROL_AF_STATE);
+      currentFocusState = FocusState.lookupCamera2Mode(cam2Mode);
+      Log.e("==========", cam2Mode + " " + currentFocusState.name());
+    }
+  };
 
   /**
    * Standard constructor
@@ -355,7 +365,7 @@ public class CameraTwoEngine extends CameraEngine {
 
       s.previewRequest=s.previewRequestBuilder.build();
 
-      ((Session) session).captureSession.setRepeatingRequest(s.previewRequest, null, handler);
+      ((Session) session).captureSession.setRepeatingRequest(s.previewRequest, focusInfoCallback, handler);
     } catch (CameraAccessException e) {
       e.printStackTrace();
     }
@@ -406,7 +416,7 @@ public class CameraTwoEngine extends CameraEngine {
           s.setZoomRect(zoomRect);
           s.previewRequest=s.previewRequestBuilder.build();
           s.captureSession.setRepeatingRequest(s.previewRequest,
-            null, handler);
+            focusInfoCallback, handler);
         }
       }
       catch (CameraAccessException e) {
@@ -415,6 +425,11 @@ public class CameraTwoEngine extends CameraEngine {
     }
 
     return(false);
+  }
+
+  @Override
+  public void getFocusState(CameraSession session, FocusStateCallback callback) {
+    callback.focusStateRetrieved(currentFocusState);
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -527,7 +542,7 @@ public class CameraTwoEngine extends CameraEngine {
 
           s.previewRequest=s.previewRequestBuilder.build();
 
-          session.setRepeatingRequest(s.previewRequest, null, handler);
+          session.setRepeatingRequest(s.previewRequest, focusInfoCallback, handler);
 
           getBus().post(new OpenedEvent());
         }
@@ -561,7 +576,7 @@ public class CameraTwoEngine extends CameraEngine {
     @Override
     public void onCaptureProgressed(CameraCaptureSession session,
                                     CaptureRequest request, CaptureResult partialResult) {
-      capture(partialResult);
+      capture(session, partialResult);
     }
 
     @Override
@@ -571,10 +586,10 @@ public class CameraTwoEngine extends CameraEngine {
 
     @Override
     public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-      capture(result);
+      capture(session, result);
     }
 
-    private void capture(CaptureResult result) {
+    private void capture(CameraCaptureSession session, CaptureResult result) {
       if (isWaitingForFocus) {
         isWaitingForFocus=false;
 
@@ -710,7 +725,7 @@ public class CameraTwoEngine extends CameraEngine {
               CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
           s.captureSession.capture(s.previewRequestBuilder.build(), null,
               handler);
-          s.captureSession.setRepeatingRequest(s.previewRequest, null, handler);
+          s.captureSession.setRepeatingRequest(s.previewRequest, focusInfoCallback, handler);
         }
       }
       catch (CameraAccessException e) {

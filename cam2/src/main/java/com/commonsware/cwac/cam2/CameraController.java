@@ -436,6 +436,10 @@ public class CameraController implements CameraView.StateCallback {
     }
   }
 
+  public void getCurrentFocusState(FocusStateCallback callback) {
+     engine.getFocusState(session, callback);
+  }
+
   /**
    * Raised if there are no available cameras on this
    * device. Consider using uses-feature elements in the
