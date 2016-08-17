@@ -36,6 +36,7 @@ import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import com.commonsware.cwac.cam2.util.Size;
@@ -67,15 +68,7 @@ public class CameraTwoEngine extends CameraEngine {
   private MediaActionSound shutter=new MediaActionSound();
   private List<Descriptor> descriptors=null;
   private FocusState currentFocusState;
-  private CameraCaptureSession.CaptureCallback focusInfoCallback = new CameraCaptureSession.CaptureCallback() {
-
-    @Override
-    public void onCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult) {
-      Integer cam2Mode = partialResult.get(CaptureResult.CONTROL_AF_STATE);
-      currentFocusState = FocusState.lookupCamera2Mode(cam2Mode);
-      Log.e("==========", cam2Mode + " " + currentFocusState.name());
-    }
-  };
+  private NotifyingCaptureCallback focusInfoCallback = new NotifyingCaptureCallback();
 
   /**
    * Standard constructor
@@ -428,8 +421,20 @@ public class CameraTwoEngine extends CameraEngine {
   }
 
   @Override
-  public void getFocusState(CameraSession session, FocusStateCallback callback) {
-    callback.focusStateRetrieved(currentFocusState);
+  public void performAutoFocus(CameraSession session, FocusStateCallback callback) {
+    final Session s = (Session) session;
+    try {
+      Descriptor camera=(Descriptor)s.getDescriptor();
+      CameraCharacteristics cc=mgr.getCameraCharacteristics(camera.cameraId);
+      s.previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+      s.addToPreviewRequest(cc, s.previewRequestBuilder);
+      s.previewRequest=s.previewRequestBuilder.build();
+
+      ((Session) session).captureSession.setRepeatingRequest(s.previewRequest, focusInfoCallback, handler);
+    } catch (CameraAccessException e) {
+      e.printStackTrace();
+    }
+    focusInfoCallback.notifyOnChange(callback);
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -924,6 +929,53 @@ public class CameraTwoEngine extends CameraEngine {
 
       bus.post(new PictureTakenEvent(xact,
         xact.process(new ImageContext(ctxt, bytes))));
+    }
+  }
+
+  private static class NotifyingCaptureCallback extends CameraCaptureSession.CaptureCallback {
+
+    private static class NotifierRunnable implements Runnable {
+      private enum Mode {
+        AWAITING_FOCUS_START, FOCUS_IN_PROGRESS
+      }
+      private Mode mode = Mode.AWAITING_FOCUS_START;
+      private FocusState currentState;
+      private FocusStateCallback stateCallback;
+
+      NotifierRunnable(FocusStateCallback callback, FocusState currentFocusState) {
+        currentState = currentFocusState;
+        stateCallback = callback;
+      }
+
+      @Override
+      public void run() {
+        stateCallback.focusStateRetrieved(currentState);
+      }
+    }
+    private FocusState currentFocusState;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private NotifierRunnable notifierRunnable;
+
+    @Override
+    public void onCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult) {
+      Integer cam2Mode = partialResult.get(CaptureResult.CONTROL_AF_STATE);
+
+      currentFocusState = FocusState.lookupCamera2Mode(cam2Mode);
+      if (notifierRunnable != null)
+        if (notifierRunnable.mode != NotifierRunnable.Mode.AWAITING_FOCUS_START && notifierRunnable.currentState != currentFocusState) {
+          notifierRunnable.currentState = currentFocusState;
+          handler.post(notifierRunnable);
+          notifierRunnable = null; // consume
+        } else {
+          if (currentFocusState == FocusState.FOCUSING) {
+            notifierRunnable.mode = NotifierRunnable.Mode.FOCUS_IN_PROGRESS;
+          }
+        }
+    }
+
+    void notifyOnChange(FocusStateCallback callback) {
+
+      notifierRunnable = new NotifierRunnable(callback, FocusState.FOCUSING);
     }
   }
 }

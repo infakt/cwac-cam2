@@ -480,7 +480,7 @@ public class ClassicCameraEngine extends CameraEngine
   }
 
   @Override
-  public void getFocusState(CameraSession session, final FocusStateCallback callback) {
+  public void performAutoFocus(CameraSession session, final FocusStateCallback callback) {
     if (focusInProgress) {
       callback.focusStateRetrieved(FocusState.FOCUSING);
     } else {
@@ -490,7 +490,7 @@ public class ClassicCameraEngine extends CameraEngine
             @Override
             public void onAutoFocus(boolean success, Camera camera) {
               callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
-              camera.cancelAutoFocus(); // unlock
+              //camera.cancelAutoFocus(); // unlock // check it
             }
           });
         }

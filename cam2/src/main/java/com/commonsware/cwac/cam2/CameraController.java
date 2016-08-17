@@ -436,8 +436,8 @@ public class CameraController implements CameraView.StateCallback {
     }
   }
 
-  public void getCurrentFocusState(FocusStateCallback callback) {
-     engine.getFocusState(session, callback);
+  public void performAutoFocus(FocusStateCallback callback) {
+     engine.performAutoFocus(session, callback);
   }
 
   /**

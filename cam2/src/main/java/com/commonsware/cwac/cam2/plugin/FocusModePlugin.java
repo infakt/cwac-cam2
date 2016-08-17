@@ -106,8 +106,10 @@ public class FocusModePlugin implements CameraPlugin {
       Camera camera, Camera.Parameters params) {
       if (params!=null) {
         String desiredMode=null;
-
-        if (focusMode==FocusMode.OFF) {
+        if (focusMode==FocusMode.AUTO) {
+          desiredMode=Camera.Parameters.FOCUS_MODE_AUTO;
+        }
+        else if (focusMode==FocusMode.OFF) {
           desiredMode=Camera.Parameters.FOCUS_MODE_FIXED;
         }
         else if (focusMode==
@@ -179,8 +181,10 @@ public class FocusModePlugin implements CameraPlugin {
     private int getDesiredFocusMode(CameraCharacteristics cc) {
       int[] availModes=cc.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
       int desiredMode;
-
-      if (focusMode==FocusMode.OFF) {
+      if (focusMode==FocusMode.AUTO) {
+        desiredMode=CameraMetadata.CONTROL_AF_MODE_AUTO;
+      }
+      else if (focusMode==FocusMode.OFF) {
         desiredMode=CameraMetadata.CONTROL_AF_MODE_OFF;
       }
       else if (focusMode==FocusMode.EDOF) {

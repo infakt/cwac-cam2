@@ -340,7 +340,7 @@ abstract public class CameraEngine {
   abstract public boolean zoomTo(CameraSession session,
                                    int zoomLevel);
 
-  public abstract void getFocusState(CameraSession session, FocusStateCallback callback);
+  public abstract void performAutoFocus(CameraSession session, FocusStateCallback callback);
 
   /**
    * Builds a CameraEngine instance based on the device's
