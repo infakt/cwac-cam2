@@ -267,12 +267,6 @@ public class ClassicCameraEngine extends CameraEngine
             false));
           camera.setPreviewTexture(texture);
           camera.startPreview();
-          camera.setAutoFocusMoveCallback(new Camera.AutoFocusMoveCallback() {
-            @Override
-            public void onAutoFocusMoving(boolean start, Camera camera) {
-              focusInProgress = start;
-            }
-          });
           getBus().post(new OpenedEvent());
         }
         catch (Exception e) {
