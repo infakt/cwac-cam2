@@ -14,6 +14,7 @@
 
 package com.commonsware.cwac.cam2;
 
+import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -314,8 +315,8 @@ public class CameraController implements CameraView.StateCallback {
       Size pictureSize;
 
       if (camera != null && cv.getWidth() > 0 && cv.getHeight() > 0) {
-        previewSize=Utils.chooseOptimalSize(camera.getPreviewSizes(),
-            cv.getWidth(), cv.getHeight(), new Size(cv.getWidth(), cv.getHeight()));
+        previewSize=Utils.chooseOptimalSize(currentCamera, camera.getPreviewSizes(),
+            cv.getWidth(), cv.getHeight(), ((Activity)cv.getContext()).getWindowManager().getDefaultDisplay());
       }
 
       if (quality>0) {

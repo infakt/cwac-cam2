@@ -15,13 +15,18 @@
 package com.commonsware.cwac.cam2.util;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.hardware.Camera;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.Surface;
+
 import com.commonsware.cwac.cam2.CameraActivity;
 import com.commonsware.cwac.cam2.CameraDescriptor;
 import com.commonsware.cwac.cam2.VideoRecorderActivity;
@@ -172,20 +177,31 @@ public class Utils {
    * width and height are at least as large as the respective requested values, and whose aspect
    * ratio matches with the specified value.
    *
+   *
+   * @param currentCamera
    * @param choices     The list of sizes that the camera supports for the intended output class
-   * @param width       The minimum desired width
-   * @param height      The minimum desired height
-   * @param aspectRatio The aspect ratio
+   * @param _width       The minimum desired width
+   * @param _height      The minimum desired height
+   * @param defaultDisplay
    * @return The optimal {@code Size}, or an arbitrary one if none were big enough
    */
-  public static Size chooseOptimalSize(List<Size> choices, int width, int height, Size aspectRatio) {
+  public static Size chooseOptimalSize(int currentCamera, List<Size> choices, int _width, int _height, Display defaultDisplay) {
     // Collect the supported resolutions that are at least as big as the preview Surface
     List<Size> bigEnough = new ArrayList<Size>();
-    int w = aspectRatio.getWidth();
-    int h = aspectRatio.getHeight();
+    int width;
+    int height;
+
+    int rotation = getCameraRotationRelativeToDisplay(currentCamera, defaultDisplay);
+    if (rotation % 180 == 0) {
+      width = _width;
+      height = _height;
+    } else {
+      width = _height;
+      height = _width;
+    }
+
     for (Size option : choices) {
-      if (option.getHeight() == option.getWidth() * h / w &&
-          option.getWidth() >= width && option.getHeight() >= height) {
+      if (option.getWidth() >= width && option.getHeight() >= height) {
         bigEnough.add(option);
       }
     }
@@ -208,5 +224,47 @@ public class Utils {
           (long) rhs.getWidth() * rhs.getHeight());
     }
 
+  }
+  /**
+
+   * @return camera rotation in degrees, relative to device's normal position.
+   * @param cameraId
+   * @param display
+   */
+  static int getCameraRotationRelativeToDisplay(int cameraId, Display display) {
+    // TODO CONSIDER USING CAM2 API. Maybe steal from CWAC-CAM2's OrientationPlugin. Revisit when CWAC-CAM2 supports 3-rd party OrientationPlugins
+    Camera.CameraInfo info = new Camera.CameraInfo();
+    Camera.getCameraInfo(cameraId, info);
+    int degrees = getDisplayRotation(display);
+
+    int result;
+    if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+      result = (info.orientation + degrees) % 360;
+      result = (360 - result) % 360;  // compensate the mirror
+    } else {
+      // back-facing
+      result = (info.orientation - degrees + 360) % 360;
+    }
+    return result;
+  }
+
+  static private int getDisplayRotation(Display display) {
+    int rotation = display.getRotation();
+    int degrees = 0;
+    switch (rotation) {
+      case Surface.ROTATION_0:
+      degrees = 0;
+        break;
+      case Surface.ROTATION_90:
+        degrees = 90;
+        break;
+      case Surface.ROTATION_180:
+        degrees = 180;
+        break;
+      case Surface.ROTATION_270:
+        degrees = 270;
+        break;
+    }
+    return degrees;
   }
 }
