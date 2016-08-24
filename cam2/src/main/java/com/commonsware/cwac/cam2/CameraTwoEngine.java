@@ -293,7 +293,7 @@ public class CameraTwoEngine extends CameraEngine {
         try {
           // This is how to tell the camera to lock focus.
           s.previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-              CameraMetadata.CONTROL_AF_TRIGGER_START);
+              CameraMetadata.CONTROL_AF_TRIGGER_IDLE);
           s.captureSession.setRepeatingRequest(
             s.previewRequestBuilder.build(),
             new RequestCaptureTransaction(s),
