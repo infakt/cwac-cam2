@@ -478,16 +478,20 @@ public class ClassicCameraEngine extends CameraEngine
     if (focusInProgress) {
       callback.focusStateRetrieved(FocusState.FOCUSING);
     } else {
-      Descriptor descriptor=(Descriptor) session.getDescriptor();
-      final Camera camera=descriptor.getCamera();
-      camera.autoFocus(new Camera.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean success, Camera camera) {
-              callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
-              //camera.cancelAutoFocus(); // unlock // check it
-            }
-          });
-        }
+      Descriptor descriptor = (Descriptor) session.getDescriptor();
+      final Camera camera = descriptor.getCamera();
+      try {
+        camera.autoFocus(new Camera.AutoFocusCallback() {
+          @Override
+          public void onAutoFocus(boolean success, Camera camera) {
+            callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
+            //camera.cancelAutoFocus(); // unlock // check it
+          }
+        });
+      } catch (RuntimeException e) {
+        callback.focusStateRetrieved(FocusState.UNFOCUSED);
+      }
+    }
   }
 
   @Override
