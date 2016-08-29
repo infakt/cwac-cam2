@@ -431,7 +431,7 @@ public class CameraTwoEngine extends CameraEngine {
       s.previewRequest=s.previewRequestBuilder.build();
 
       ((Session) session).captureSession.setRepeatingRequest(s.previewRequest, focusInfoCallback, handler);
-    } catch (CameraAccessException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     focusInfoCallback.notifyOnChange(callback);
