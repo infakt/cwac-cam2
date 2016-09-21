@@ -7,11 +7,11 @@ dependencies {
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.0"
+    buildToolsVersion "24.0.2"
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 23
+        targetSdkVersion 24
         testApplicationId "com.commonsware.cwac.cam2.test"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
