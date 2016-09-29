@@ -962,7 +962,7 @@ public class CameraTwoEngine extends CameraEngine {
 
       currentFocusState = FocusState.lookupCamera2Mode(cam2Mode);
       if (notifierRunnable != null)
-        if (notifierRunnable.mode != NotifierRunnable.Mode.AWAITING_FOCUS_START && notifierRunnable.currentState != currentFocusState) {
+        if ((notifierRunnable.mode != NotifierRunnable.Mode.AWAITING_FOCUS_START && notifierRunnable.currentState != currentFocusState) || currentFocusState == FocusState.UNKNOWN) {
           notifierRunnable.currentState = currentFocusState;
           handler.post(notifierRunnable);
           notifierRunnable = null; // consume

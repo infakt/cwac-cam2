@@ -15,14 +15,14 @@ public enum FocusState {
 
 
 
-    int cam2Mode;
+    Integer cam2Mode;
     FocusState(int cam2Mode) {
         this.cam2Mode = cam2Mode;
     }
 
-    public static FocusState lookupCamera2Mode(int cam2Mode) {
+    public static FocusState lookupCamera2Mode(Integer cam2Mode) {
         for (FocusState state: values()) {
-            if (state.cam2Mode == cam2Mode) {
+            if (state.cam2Mode.equals(cam2Mode)) {
                 return state;
             }
         }
