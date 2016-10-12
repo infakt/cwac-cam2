@@ -22,6 +22,8 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import com.commonsware.cwac.cam2.util.Size;
 import java.io.FileOutputStream;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.greenrobot.event.EventBus;
 
@@ -48,6 +51,7 @@ public class ClassicCameraEngine extends CameraEngine
   private int previewWidth, previewHeight;
   private int previewFormat;
   private boolean focusInProgress;
+  private Handler handler;
 
   public ClassicCameraEngine(Context ctxt) {
     this.ctxt=ctxt.getApplicationContext();
@@ -221,6 +225,7 @@ public class ClassicCameraEngine extends CameraEngine
   @Override
   public void open(final CameraSession session,
                    final SurfaceTexture texture) {
+    handler = new Handler(Looper.getMainLooper());
     getThreadPool().execute(new Runnable() {
       @Override
       public void run() {
@@ -475,19 +480,46 @@ public class ClassicCameraEngine extends CameraEngine
 
   @Override
   public void performAutoFocus(CameraSession session, final FocusStateCallback callback) {
+    final AtomicBoolean focusGuard = new AtomicBoolean(false);
+
     if (focusInProgress) {
       callback.focusStateRetrieved(FocusState.FOCUSING);
+
     } else {
       Descriptor descriptor = (Descriptor) session.getDescriptor();
       final Camera camera = descriptor.getCamera();
       try {
+        Camera.Parameters parameters = camera.getParameters();
+        parameters.setFocusMode("auto");
+        camera.setParameters(parameters);
+        camera.cancelAutoFocus();
+
         camera.autoFocus(new Camera.AutoFocusCallback() {
           @Override
           public void onAutoFocus(boolean success, Camera camera) {
+            focusGuard.set(true);
             callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
             //camera.cancelAutoFocus(); // unlock // check it
           }
         });
+        new Thread(new Runnable() { // callback hell
+          @Override
+          public void run() {
+            try {
+              Thread.sleep(3000);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+            handler.post(new Runnable() {
+              @Override
+              public void run() {
+                if (!focusGuard.get()) {
+                  callback.focusStateRetrieved(FocusState.UNFOCUSED);
+                }
+              }
+            });
+          }
+        }).start();
       } catch (RuntimeException e) {
         callback.focusStateRetrieved(FocusState.UNFOCUSED);
       }
