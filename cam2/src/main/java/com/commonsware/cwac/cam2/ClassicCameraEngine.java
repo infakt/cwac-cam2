@@ -490,6 +490,16 @@ public class ClassicCameraEngine extends CameraEngine
       final Camera camera = descriptor.getCamera();
       try {
         Camera.Parameters parameters = camera.getParameters();
+        List<String> supportedFocusModes = parameters.getSupportedFocusModes();
+        if (supportedFocusModes.size() > 0) {
+          for (String mode : supportedFocusModes) {
+            if (!"auto".equals(mode)) { // switch to different mode - galaxy tab 10.1 :(
+              parameters.setFocusMode(mode);
+              camera.setParameters(parameters);
+            }
+          }
+        }
+
         parameters.setFocusMode("auto");
         camera.setParameters(parameters);
         camera.cancelAutoFocus();
@@ -497,9 +507,11 @@ public class ClassicCameraEngine extends CameraEngine
         camera.autoFocus(new Camera.AutoFocusCallback() {
           @Override
           public void onAutoFocus(boolean success, Camera camera) {
-            focusGuard.set(true);
-            callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
-            //camera.cancelAutoFocus(); // unlock // check it
+            synchronized (focusGuard) {
+              if (!focusGuard.getAndSet(true)) {
+                callback.focusStateRetrieved(success ? FocusState.FOCUSED : FocusState.UNFOCUSED);
+              }
+            }
           }
         });
         new Thread(new Runnable() { // callback hell
@@ -513,8 +525,10 @@ public class ClassicCameraEngine extends CameraEngine
             handler.post(new Runnable() {
               @Override
               public void run() {
-                if (!focusGuard.get()) {
-                  callback.focusStateRetrieved(FocusState.UNFOCUSED);
+                synchronized (focusGuard) {
+                  if (!focusGuard.getAndSet(true)) {
+                    callback.focusStateRetrieved(FocusState.UNFOCUSED);
+                  }
                 }
               }
             });
