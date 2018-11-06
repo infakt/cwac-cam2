@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 
 dependencies {
-    compile 'com.github.clans:fab:1.6.2'
-    compile 'de.greenrobot:eventbus:2.4.0'
+    implementation 'com.github.clans:fab:1.6.2'
+    implementation 'de.greenrobot:eventbus:2.4.0'
 }
 
 android {
